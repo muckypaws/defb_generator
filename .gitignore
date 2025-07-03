@@ -1,0 +1,6 @@
+Older/
+venv/
+wenv/
+*.psd
+*.zip
+TestOutput/

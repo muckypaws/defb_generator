@@ -1,0 +1,31 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+
+    {
+      "name": "Python Debugger: Current File",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "args": [
+        "TestData/testship1.png",
+        "--sprite_width", "16",
+        "--sprite_height", "16",
+        //"--offset_x", "1",
+        //"--offset_y", "1",
+        //"--gap_x", "1",
+        //"--gap_y", "1",
+        "--exclude_colour", "#000000",
+        "--labels",
+        "--output", "output_with_offset_mirror.asm",
+        "--binfile", "output_with_offset_mirror.bin",
+        "--preview",
+        //"--inverse",
+        //"--mirror-align",
+        //"--sprite_data","TestData/chumper-bear.bin"
+        "--animate"
+      ]
+    }
+  ]
+}
