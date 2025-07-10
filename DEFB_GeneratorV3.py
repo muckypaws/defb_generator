@@ -7,12 +7,10 @@ ZX Spectrum-compatible assembler output using DEFB statements.
 Supports output in decimal, hexadecimal, and binary formats, as well as raw binary file export.
 
 Author: Jason Brooks - muckypaws.com
-Version: 0.3c - Windows is Feckin' shite edition... 
-Date: 3rd July 2025
+Version: 0.4 - Initial Public Release...
+Project Start: 2nd July 2025
+Release Date: 3rd July 2025
 """
-import sys
-print("DEBUG: Python path is", sys.executable)
-
 import os
 import sys
 import time
@@ -28,8 +26,6 @@ else:
     import tty
     import select
 
-print("Interpreter path:", sys.executable)
-
 def key_pressed():
     """
     Check if a key has been pressed (cross-platform, no admin rights).
@@ -39,6 +35,47 @@ def key_pressed():
     else:
         dr, _, _ = select.select([sys.stdin], [], [], 0)
         return bool(dr)
+    
+def read_key():
+    """Read one character from stdin to consume the key press."""
+    if platform.system() == "Windows":
+        return msvcrt.getch()
+    else:
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
+        try:
+            tty.setraw(fd)
+            return sys.stdin.read(1)
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+
+    
+def print_banner(version: str):
+    banner = r"""
+ ______    _______  _______  ______    _______      
+|    _ |  |       ||       ||    _ |  |       |     
+|   | ||  |    ___||_     _||   | ||  |   _   |     
+|   |_||_ |   |___   |   |  |   |_||_ |  | |  |     
+|    __  ||    ___|  |   |  |    __  ||  |_|  |     
+|   |  | ||   |___   |   |  |   |  | ||       |     
+|___|  |_||_______|  |___|  |___|  |_||_______|     
+ _______  _______  ______    ___   _______  _______ 
+|       ||       ||    _ |  |   | |       ||       |
+|  _____||    _  ||   | ||  |   | |_     _||    ___|
+| |_____ |   |_| ||   |_||_ |   |   |   |  |   |___ 
+|_____  ||    ___||    __  ||   |   |   |  |    ___|
+ _____| ||   |    |   |  | ||   |   |   |  |   |___ 
+|_______||___|    |___|  |_||___|   |___|  |_______|
+ __   __  _______  _______  ___   _______           
+|  |_|  ||   _   ||       ||   | |       |          
+|       ||  |_|  ||    ___||   | |       |          
+|       ||       ||   | __ |   | |       |          
+|       ||       ||   ||  ||   | |      _|          
+| ||_|| ||   _   ||   |_| ||   | |     |_           
+|_|   |_||__| |__||_______||___| |_______|          
+"""
+    print(f"\n{banner}\nRetro Sprite Magic Version - {version}")
+
 
 def render_spectrum_bin_to_frames(sprite_data, sprite_width, sprite_height):
     """
@@ -76,7 +113,7 @@ def render_spectrum_bin_to_frames(sprite_data, sprite_width, sprite_height):
     return frames
 
 
-def render_spectrum_bin_to_image(sprite_data, sprite_width, sprite_height, sprites_per_row=None):
+def render_spectrum_bin_to_image(sprite_data, sprite_width, sprite_height, texture_width=None):
     """
     Convert ZX Spectrum sprite binary data into a 2D greyscale image array.
 
@@ -89,12 +126,17 @@ def render_spectrum_bin_to_image(sprite_data, sprite_width, sprite_height, sprit
     Returns:
         list of list of int: 2D greyscale image data (0 = background, 255 = pixel on).
     """
+    rounded_width = ((sprite_width + 7) // 8) * 8
     bytes_per_row = (sprite_width + 7) // 8
     bytes_per_sprite = bytes_per_row * sprite_height
     total_sprites = len(sprite_data) // bytes_per_sprite
 
-    if sprites_per_row is None:
+    # Filed under, Bob will test a value of zero...
+    if texture_width is None or texture_width == 0:
         sprites_per_row = math.ceil(math.sqrt(total_sprites))
+    else:
+        #sprites_per_row = texture_width // (bytes_per_row*8)
+        sprites_per_row = min(texture_width // rounded_width, total_sprites)
 
     sprites_per_column = math.ceil(total_sprites / sprites_per_row)
 
@@ -151,21 +193,6 @@ def ascii_preview_from_image(image_data):
         preview.append(line)
     return '\n'.join(preview)
 
-def ascii_preview_from_image(image_data):
-    """
-    Generate an ASCII preview of a greyscale image using full blocks for white pixels.
-
-    Args:
-        image_data (list of list of int): 2D array of greyscale pixel values.
-
-    Returns:
-        str: Multi-line string preview of the image.
-    """
-    preview = []
-    for row in image_data:
-        line = ''.join('█' if px > 0 else ' ' for px in row)
-        preview.append(line)
-    return '\n'.join(preview)
 
 def animate_ascii_preview(frames, delay=0.25):
     """
@@ -192,7 +219,7 @@ def animate_ascii_preview(frames, delay=0.25):
                     print(ascii_preview_from_image(frame))
                 time.sleep(delay)
                 if key_pressed():
-                    #read_key()
+                    read_key()
                     raise KeyboardInterrupt
     except KeyboardInterrupt:
         print("\nAnimation stopped.")
@@ -420,7 +447,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Convert a PNG sprite sheet into ZX Spectrum DEFB statements."
     )
-    parser.add_argument("filename", help="Path to input PNG file")
+    parser.add_argument("filename", nargs='?', default=None, help="Path to input PNG file")
     parser.add_argument("--sprite_width", type=int, default=8, help="Width of each sprite in pixels")
     parser.add_argument("--sprite_height", type=int, default=8, help="Height of each sprite in pixels")
     parser.add_argument("--gap_x", type=int, default=0, help="Horizontal gap between sprites (default: 0)")
@@ -443,19 +470,32 @@ def main():
     parser.add_argument("--delay", type=float, default=0.2, help="Delay in seconds between frames (default: 0.2)")
     parser.add_argument("--sprite_data", help="Path to .BIN file containing ZX Spectrum sprite data")
     parser.add_argument("--bin_output_png", help="Filename to write rendered PNG output from .BIN file")
+    parser.add_argument("--max_texture_width", type=int, default=0, help="Filename to write rendered PNG output from .BIN file")
     parser.add_argument("-o", "--output", help="Output filename for DEFB listing (stdout if not specified)")
 
     args = parser.parse_args()
 
-    if not os.path.isfile(args.filename):
-        print(f"❌ Error: File not found - '{args.filename}'")
-        sys.exit(1)
+    # If BIN File, then PNG File is not required...
+    # Another cludge but will work for now.. 
 
-    if not args.filename.lower().endswith(".png"):
-        print(f"⚠️ Warning: '{args.filename}' does not appear to be a .png file.")
+    if not args.sprite_data:
+        if not os.path.isfile(args.filename):
+            print(f"❌ Error: File not found - '{args.filename}'")
+            sys.exit(1)
+
+        if not args.filename.lower().endswith(".png"):
+            print(f"⚠️ Warning: '{args.filename}' does not appear to be a .png file.")
 
     if args.mirror_align:
         args.mirror = True
+
+    # It's a cludge for now...
+    if args.animate:
+        args.preview = True
+
+    if args.mirror:
+        args.mirror_align = True
+        #args.mirror = False
 
     if args.sprite_data:
         if not os.path.isfile(args.sprite_data):
@@ -472,7 +512,8 @@ def main():
         image = render_spectrum_bin_to_image(
             sprite_data=sprite_bytes,
             sprite_width=args.sprite_width,
-            sprite_height=args.sprite_height
+            sprite_height=args.sprite_height,
+            texture_width=args.max_texture_width
         )
         if args.bin_output_png:
             write_image_to_png(image, args.bin_output_png)
@@ -529,5 +570,6 @@ def main():
             #preview_animated_ascii(ascii_blocks, delay=args.delay)
 
 if __name__ == "__main__":
-    
+    print_banner("0.3")
+    time.sleep(1)
     main()

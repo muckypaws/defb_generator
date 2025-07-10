@@ -4,3 +4,5 @@ wenv/
 *.psd
 *.zip
 TestOutput/
+.DS_Store
+BugList.txt

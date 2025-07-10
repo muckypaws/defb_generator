@@ -1,7 +1,6 @@
 {
   "version": "0.2.0",
   "configurations": [
-
     {
       "name": "Python Debugger: Current File",
       "type": "debugpy",
@@ -9,21 +8,27 @@
       "program": "${file}",
       "console": "integratedTerminal",
       "args": [
-        "TestData/testship1.png",
-        "--sprite_width", "16",
-        "--sprite_height", "16",
+        //"TestData/SpriteSheetBig.png",
+        //"--sprite_width", "10",
+        //"--sprite_height", "16",
+        "--sprite_width", "8",
+        "--sprite_height", "8",
         //"--offset_x", "1",
         //"--offset_y", "1",
         //"--gap_x", "1",
         //"--gap_y", "1",
         "--exclude_colour", "#000000",
         "--labels",
-        "--output", "output_with_offset_mirror.asm",
-        "--binfile", "output_with_offset_mirror.bin",
-        "--preview",
+        "--output", "TestOutput/output_textureTest.asm",
+        //"--binfile", "TestData/big.bin",
+        //"--preview",
         //"--inverse",
         //"--mirror-align",
-        //"--sprite_data","TestData/chumper-bear.bin"
+        "--max_texture_width", "2048",
+        "--sprite_data","TestData/BobNewFontTest.bin",
+        //"--sprite_data","TestData/big.bin",
+        "--bin_output_png","TestOutput/BobNewFontText.png",
+        //"--bin_output_png","TestOutput/BigBob.png",
         "--animate"
       ]
     }
