@@ -131,28 +131,31 @@ Press any key to stop animation.
 
 ## 🧠 Command Line Parameters
 
-| Parameter             | Description |
-|----------------------|-------------|
-| `--sprite_width`      | Width of each sprite in pixels (must be multiple of 8) |
-| `--sprite_height`     | Height of each sprite in pixels |
-| `--gap_x`, `--gap_y`  | Horizontal/vertical gap between sprites |
-| `--offset_x`, `--offset_y` | Pixel offset into the sheet |
-| `--exclude_colour`    | Hex colour to treat as transparent (default `#000000`) |
-| `--exclude_tolerance` | Tolerance in colour matching (default `8`) |
-| `--alpha_threshold`   | Ignore pixels with alpha below this value |
-| `--hex`, `--bin`      | Output in hexadecimal or binary format |
-| `--labels`            | Add labels to DEFB output (e.g., `sprite_0_1:`) |
-| `--preview`           | Show ASCII preview of each sprite |
-| `--inverse`           | Invert logic (treat exclude as 'on') |
-| `--mirror`            | Horizontally mirror each sprite |
-| `--mirror-align`      | Right-align mirrored image (reverses byte order too) |
-| `--flip-vertical`     | Vertically flip the sprite |
-| `--animate`           | Loop ASCII animation of extracted sprites |
-| `--delay`             | Frame delay for animation (default `0.2` sec) |
-| `--sprite_data`       | Path to a `.bin` file containing ZX sprite data |
-| `--bin_output_png`    | PNG output path when reading `.bin` sprite data |
-| `--binfile`           | Write raw binary sprite data to `.bin` |
-| `-o`, `--output`      | Output DEFB listing to file |
+| Parameter               | Description |
+|------------------------|-------------|
+| `filename`             | Optional path to PNG file (required unless using `--sprite_data`) |
+| `--sprite_width`       | Width of each sprite in pixels (should be multiple of 8) |
+| `--sprite_height`      | Height of each sprite in pixels |
+| `--gap_x`, `--gap_y`   | Horizontal and vertical gaps between sprites |
+| `--offset_x`, `--offset_y` | Pixel offset into the sheet (top-left origin) |
+| `--exclude_colour`     | Hex colour to treat as background (default `#000000`) |
+| `--exclude_tolerance`  | RGB colour match tolerance (default `8`) |
+| `--alpha_threshold`    | Ignore pixels with alpha below this value (default `254`) |
+| `--hex`, `--bin`       | Output DEFB in hexadecimal or binary form |
+| `--labels`             | Add labels like `sprite_0_1:` to DEFB output |
+| `--preview`            | Print ASCII preview of each sprite |
+| `--inverse`            | Invert logic (excluded pixels become sprite bits) |
+| `--mirror`             | Mirror sprite bits horizontally |
+| `--mirror-align`       | Reverse byte order along with bit reversal |
+| `--flip-vertical`      | Flip sprite vertically (row order reversed) |
+| `--animate`            | Animate sprites in ASCII (looped display) |
+| `--delay`              | Delay between animation frames (default `0.2`) |
+| `--sprite_data`        | Input raw binary sprite data (`.bin`) instead of PNG |
+| `--bin_output_png`     | Output PNG reconstruction from sprite data |
+| `--max_texture_width`  | Max image width for reconstructed sprite grid |
+| `--binfile`            | Output raw sprite binary to `.bin` file |
+| `-o`, `--output`       | Output file for DEFB listing (stdout if omitted) |
+
 
 ---
 
