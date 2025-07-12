@@ -26,6 +26,9 @@ else:
     import tty
     import select
 
+from modules.helpers import load_palette_json, make_ink_palette
+from modules.amstrad import decode_amstrad, default_cpc_palette
+
 def key_pressed():
     """
     Check if a key has been pressed (cross-platform, no admin rights).
@@ -472,8 +475,81 @@ def main():
     parser.add_argument("--bin_output_png", help="Filename to write rendered PNG output from .BIN file")
     parser.add_argument("--max_texture_width", type=int, default=0, help="Filename to write rendered PNG output from .BIN file")
     parser.add_argument("-o", "--output", help="Output filename for DEFB listing (stdout if not specified)")
+   
+    # --- Amstrad CPC Support ---
+    parser.add_argument('--Amstrad', action='store_true', help='Enable Amstrad CPC decoding mode')
+    parser.add_argument('--Mode', type=int, choices=[0, 1, 2], default=2, help='CPC graphics mode (0, 1, or 2). Default is 2.')
+    parser.add_argument('--palette', type=str, help='Path to JSON file defining CPC colour palette (27-colour space)')
+    parser.add_argument('--screen_dump', action='store_true', help='Use interleaved memory layout for screen dumps')
+    parser.add_argument('--detect_hw_colours', action='store_true', help='Attempt to detect embedded hardware colour attributes (Advanced Art Studio etc.)')
+    parser.add_argument(
+        '--inks',
+        type=str,
+        help='Comma-separated list of 4 CPC ink values (0–26) for Mode 1 (e.g. 0,26,6,18)'
+    )
 
     args = parser.parse_args()
+    if args.Amstrad:
+        # Step 1: Load raw data
+        with open(args.filename, "rb") as f:
+            raw_data = f.read()
+
+        # Step 2: Load default palette
+        full_palette = default_cpc_palette()
+        palette = full_palette  # Use this as base unless overridden
+
+        # Step 3: Load custom palette JSON if provided
+        if args.palette:
+            try:
+                palette = load_palette_json(args.palette)
+                print(f"🎨 Loaded custom palette from {args.palette}")
+            except Exception as e:
+                print(f"[Warning] Failed to load palette file: {e}. Falling back to default CPC palette.")
+                palette = full_palette
+
+        # Step 4: Apply --inks mapping if present (overrides even the custom JSON palette)
+        if args.inks:
+            try:
+                ink_values = [int(i.strip()) for i in args.inks.split(",")]
+                if len(ink_values) != 4 or not all(0 <= i <= 26 for i in ink_values):
+                    raise ValueError
+                logical_to_ink = {i: ink_values[i] for i in range(4)}
+                palette = make_ink_palette(logical_to_ink, full_palette)
+                print(f"🎨 Using custom ink mapping: {logical_to_ink}")
+            except Exception:
+                print("❌ Error: --inks must be 4 comma-separated numbers between 0 and 26 (e.g. 0,26,6,18)")
+                sys.exit(1)
+
+        # Step 5: Decode image
+        image_data = decode_amstrad(
+            raw_data,
+            mode=args.Mode,
+            palette=palette,
+            screen_dump=args.screen_dump,
+            detect_hw_colours=args.detect_hw_colours
+        )
+
+        # Step 6: Save to PNG
+        output_file = args.output if args.output else "output.png"
+        width = len(image_data[0])
+        height = len(image_data)
+        flat_rows = [[value for pixel in row for value in pixel] for row in image_data]
+
+        with open(output_file, "wb") as f:
+            writer = png.Writer(
+                width=width,
+                height=height,
+                bitdepth=8,
+                greyscale=False,
+                planes=3
+            )
+            writer.write(f, flat_rows)
+
+        print(f"✅ PNG written to {output_file}")
+        return
+
+
+
 
     # If BIN File, then PNG File is not required...
     # Another cludge but will work for now.. 
