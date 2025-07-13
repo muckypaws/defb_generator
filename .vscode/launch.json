@@ -35,7 +35,7 @@
         "-o","TestOutput/Dizzy.png",
         "--screen_dump",
         "TestData/Dizzy.scr",
-        "--inks","0,18,26,6"
+        "--inks","0,26,6,18"
       ]
     }
   ]

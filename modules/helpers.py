@@ -1,3 +1,11 @@
+"""
+Helper functions for palette handling and JSON utilities.
+
+This module provides reusable support routines such as:
+- Loading JSON palette files
+- Mapping logical INK values to RGB colour palettes
+- Performing colour-related transformations used across systems
+"""
 import json
 import os
 
@@ -18,7 +26,7 @@ def load_palette_json(path):
 
 def default_bw_palette():
     """
-    Default black-and-white palette for Mode 2 (monochrome).
+    Set black-and-white palette for Mode 2 (monochrome).
 
     Returns:
         dict: {"0": [0, 0, 0], "1": [255, 255, 255]}
